@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/compteur_model.dart';
-import '../constants/app_values.dart';
+import '../services/compteur_service.dart';
 import '../utils/compteur_utils.dart';
 
 // ==========================================
@@ -15,99 +15,108 @@ import '../utils/compteur_utils.dart';
 // 5. ✅ Meilleure gestion de dépendances : dépendances automatiques
 // 6. ✅ Hot reload amélioré : recharge plus rapide
 //
+// ✅ AMÉLIORATIONS :
+// - Utilise le service pour abstraire les opérations de données
+// - Sépare la logique métier de la gestion des données
+// - Facilite les tests (service mockable)
+//
 // ==========================================
 
 // Notifier = Classe Riverpod 3.x pour gérer l'état
 // Plus moderne et simple que StateNotifier
 class CompteurController extends Notifier<CompteurModel> {
+  // ✅ Service injecté via le provider
+  late final CompteurService _service;
+
   // build() = Méthode requise qui retourne l'état initial
   @override
   CompteurModel build() {
-    return CompteurModel();
+    // ✅ Injection du service via le provider
+    _service = ref.read(compteurServiceProvider);
+    return _service.creerCompteur();
   }
 
-  // ✅ Méthode pour augmenter le compteur avec validation
+  // ✅ Méthode pour augmenter le compteur avec validation via service
   void incrementer() {
-    // Validation : vérifier si on peut encore incrémenter
-    if (state.valeur >= AppValues.compteurMax) {
-      // Ne pas dépasser la limite maximale
+    // ✅ Utilise le service pour calculer la nouvelle valeur
+    final nouvelleValeur = _service.calculerIncrementation(state.valeur);
+    if (nouvelleValeur == null) {
+      // Limite atteinte, ne rien faire
       return;
     }
 
-    try {
-      state = state.copyWith(
-        valeur: state.valeur + 1,
-        dateModification: DateTime.now(),
-      );
-    } catch (e) {
-      // Gestion d'erreur si la validation échoue
-      // (ne devrait pas arriver grâce à la vérification précédente)
-      throw StateError('Impossible d\'incrémenter: $e');
+    // ✅ Utilise le service pour mettre à jour le modèle
+    final nouveauModele = _service.mettreAJourValeur(state, nouvelleValeur);
+    if (nouveauModele != null) {
+      state = nouveauModele;
     }
   }
 
-  // ✅ Méthode pour diminuer le compteur avec validation
+  // ✅ Méthode pour diminuer le compteur avec validation via service
   void decrementer() {
-    // Validation : vérifier si on peut encore décrémenter
-    if (state.valeur <= AppValues.compteurMin) {
-      // Ne pas descendre en dessous de la limite minimale
+    // ✅ Utilise le service pour calculer la nouvelle valeur
+    final nouvelleValeur = _service.calculerDecrementation(state.valeur);
+    if (nouvelleValeur == null) {
+      // Limite atteinte, ne rien faire
       return;
     }
 
-    try {
-      state = state.copyWith(
-        valeur: state.valeur - 1,
-        dateModification: DateTime.now(),
-      );
-    } catch (e) {
-      // Gestion d'erreur si la validation échoue
-      throw StateError('Impossible de décrémenter: $e');
+    // ✅ Utilise le service pour mettre à jour le modèle
+    final nouveauModele = _service.mettreAJourValeur(state, nouvelleValeur);
+    if (nouveauModele != null) {
+      state = nouveauModele;
     }
   }
 
-  // Méthode pour remettre à zéro
+  // Méthode pour remettre à zéro via service
   void reinitialiser() {
-    // Crée un nouveau modèle avec valeur 0
-    state = CompteurModel();
+    // ✅ Utilise le service pour créer un nouveau modèle
+    state = _service.creerCompteur();
   }
 
-  // ✅ Méthode pour multiplier par 2 avec validation
+  // ✅ Méthode pour multiplier par 2 avec validation via service
   void multiplierPar2() {
-    final nouvelleValeur = state.valeur * 2;
-    
-    // Validation : vérifier si le résultat est dans les limites
-    if (nouvelleValeur > AppValues.compteurMax) {
-      // Ne pas dépasser la limite maximale
+    // ✅ Utilise le service pour calculer la nouvelle valeur
+    final nouvelleValeur = _service.calculerMultiplication(state.valeur);
+    if (nouvelleValeur == null) {
+      // Limite serait dépassée, ne rien faire
       return;
     }
 
-    try {
-      state = state.copyWith(
-        valeur: nouvelleValeur,
-        dateModification: DateTime.now(),
-      );
-    } catch (e) {
-      throw StateError('Impossible de multiplier: $e');
+    // ✅ Utilise le service pour mettre à jour le modèle
+    final nouveauModele = _service.mettreAJourValeur(state, nouvelleValeur);
+    if (nouveauModele != null) {
+      state = nouveauModele;
     }
   }
 
-  // Méthode pour sauvegarder en JSON
+  // Méthode pour sauvegarder en JSON via service
   Map<String, dynamic> sauvegarder() {
-    return state.toJson();
+    return _service.sauvegarder(state);
   }
 
-  // ✅ Méthode pour charger depuis JSON avec gestion d'erreurs
+  // ✅ Méthode pour charger depuis JSON avec gestion d'erreurs via service
   void charger(Map<String, dynamic> json) {
     try {
-      state = CompteurModel.fromJson(json);
+      state = _service.charger(json);
     } catch (e) {
       // Si le chargement échoue, réinitialiser à zéro
-      state = CompteurModel();
+      state = _service.creerCompteur();
       // Relancer l'erreur pour que l'appelant soit informé
       rethrow;
     }
   }
 }
+
+// ==========================================
+// PROVIDER : Crée et expose le service
+// ==========================================
+
+/// Provider pour le service de compteur
+/// Permet d'injecter le service dans le controller
+final compteurServiceProvider = Provider<CompteurService>((ref) {
+  return CompteurService();
+});
 
 // ==========================================
 // PROVIDER : Crée et expose le controller

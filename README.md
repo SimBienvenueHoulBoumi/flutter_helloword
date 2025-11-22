@@ -481,6 +481,7 @@ helloworld/
 │   ├── constants/           # Constantes (espacements, couleurs, etc.)
 │   ├── models/              # Modèles de données
 │   ├── controllers/         # Controllers (logique métier + Riverpod)
+│   ├── services/            # Services (abstraction des opérations de données)
 │   ├── utils/               # Utilitaires (fonctions statiques)
 │   ├── widgets/             # Widgets réutilisables
 │   └── screens/             # Écrans (pages complètes)
@@ -520,6 +521,13 @@ L'application suit une **architecture modulaire** avec séparation claire des re
 │      CONTROLLERS (Logique)          │
 │    - Gestion d'état (Riverpod)      │
 │    - Logique métier                 │
+│    - Utilise les services           │
+└─────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│         SERVICES (Données)          │
+│    - Abstrait les opérations        │
+│    - Validation et calculs          │
 └─────────────────────────────────────┘
               ↓
 ┌─────────────────────────────────────┐
@@ -532,7 +540,8 @@ L'application suit une **architecture modulaire** avec séparation claire des re
 ### Séparation des responsabilités
 
 - **Models** : Structure des données uniquement
-- **Controllers** : Logique métier et état (Riverpod)
+- **Services** : Abstraction des opérations de données
+- **Controllers** : Logique métier et état (Riverpod), utilise les services
 - **Screens** : Pages complètes de l'application
 - **Widgets** : Composants UI réutilisables
 - **Utils** : Fonctions utilitaires statiques

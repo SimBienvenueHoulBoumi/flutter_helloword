@@ -9,8 +9,19 @@ Ce dossier contient les **controllers** de l'application. Un controller gère la
 Un controller :
 - ✅ Contient la **logique métier** (incrémenter, décrémenter, etc.)
 - ✅ Gère l'**état** de l'application (via Riverpod)
+- ✅ **Utilise les services** pour les opérations de données
 - ✅ Ne contient **pas** d'UI (pas de widgets)
-- ✅ Peut être **testé** facilement
+- ✅ Peut être **testé** facilement (service mockable)
+
+## ✅ AMÉLIORATION : Utilisation des services
+
+Le controller utilise maintenant **les services** pour abstraire les opérations de données :
+- ✅ Séparation claire des responsabilités
+- ✅ Controller plus simple et focalisé
+- ✅ Service testable indépendamment
+- ✅ Facile d'ajouter une source de données (API, BDD, etc.)
+
+**📖 Voir :** [services/README.md](../services/README.md)
 
 ## 📁 Contenu
 
@@ -18,7 +29,8 @@ Un controller :
 Controller qui gère le compteur de l'application.
 
 **Fichier principal :**
-- `CompteurController` - Gère l'état et la logique du compteur
+- `CompteurController` - Gère l'état et la logique du compteur (utilise le service)
+- `compteurServiceProvider` - Provider pour le service de compteur
 - `compteurControllerProvider` - Provider Riverpod pour accéder au controller
 - `compteurValueProvider` - Provider pour obtenir juste la valeur (int)
 - `compteurMessageProvider` - Provider pour obtenir le message selon la valeur
@@ -40,17 +52,45 @@ class MonWidget extends ConsumerWidget {
     final compteur = ref.watch(compteurValueProvider);
     
     // Obtenir le controller pour appeler ses méthodes
+    // Le controller utilise le service en interne
     final controller = ref.read(compteurControllerProvider.notifier);
     
     return Column(
       children: [
         Text('Compteur: $compteur'),
         ElevatedButton(
-          onPressed: controller.incrementer,  // Appeler une méthode
+          onPressed: controller.incrementer,  // Appelle le service via le controller
           child: Text('Incrémenter'),
         ),
       ],
     );
+  }
+}
+```
+
+### Injection de dépendances (Service)
+
+Le controller **utilise le service** via injection de dépendances :
+
+```dart
+// Le service est injecté via le provider
+late final CompteurService _service;
+
+@override
+CompteurModel build() {
+  // Injection du service via le provider
+  _service = ref.read(compteurServiceProvider);
+  return _service.creerCompteur();
+}
+
+// Utilisation du service
+void incrementer() {
+  final nouvelleValeur = _service.calculerIncrementation(state.valeur);
+  if (nouvelleValeur != null) {
+    final nouveauModele = _service.mettreAJourValeur(state, nouvelleValeur);
+    if (nouveauModele != null) {
+      state = nouveauModele;
+    }
   }
 }
 ```

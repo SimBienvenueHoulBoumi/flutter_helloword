@@ -27,6 +27,10 @@ lib/
 ├── controllers/           # 🎮 Controllers (logique métier + état Riverpod)
 │   └── compteur_controller.dart
 │
+├── services/              # 🔧 Services (abstraction des opérations de données)
+│   ├── compteur_service.dart
+│   └── error_handler.dart
+│
 ├── utils/                 # 🛠️ Utilitaires (fonctions statiques réutilisables)
 │   ├── compteur_utils.dart
 │   └── date_formatter.dart
@@ -73,9 +77,33 @@ Contient les **controllers** qui gèrent la logique métier avec Riverpod.
 - ✅ Gère la logique métier
 - ✅ Gère l'état de l'application (via Riverpod)
 - ✅ Ne contient pas d'UI
+- ✅ Utilise les services pour les opérations de données
 - ✅ Testable facilement
 
 **📖 Voir :** [controllers/README.md](controllers/README.md)
+
+---
+
+### 🔧 `services/`
+
+Contient les **services** qui abstraient les opérations de données.
+- ✅ Abstrait les opérations de données
+- ✅ Sépare la logique métier (controller) de la gestion des données
+- ✅ Facilite les tests (mockable)
+- ✅ Facilite l'ajout d'une source de données (API, BDD, etc.)
+- ✅ Gestion centralisée des erreurs
+
+**📖 Voir :** [services/README.md](services/README.md)
+
+---
+Contient les **services** qui abstraient les opérations de données.
+- ✅ Abstrait les opérations de données
+- ✅ Sépare la logique métier (controller) de la gestion des données
+- ✅ Facilite les tests (mockable)
+- ✅ Facilite l'ajout d'une source de données (API, BDD, etc.)
+- ✅ Gestion centralisée des erreurs
+
+**📖 Voir :** [services/README.md](services/README.md)
 
 ---
 
@@ -121,14 +149,22 @@ Définit la structure des données.
 CompteurModel(valeur: 42)
 ```
 
-### 2. **Controller** (Controllers)
-Gère la logique métier et l'état.
+### 2. **Service** (Services)
+Abstrait les opérations de données.
 
 ```dart
-controller.incrementer();  // Modifie le modèle
+final nouvelleValeur = service.calculerIncrementation(valeur);
+final nouveauModele = service.mettreAJourValeur(model, nouvelleValeur);
 ```
 
-### 3. **Screen** (Screens)
+### 3. **Controller** (Controllers)
+Gère la logique métier et l'état en utilisant les services.
+
+```dart
+controller.incrementer();  // Utilise le service pour modifier le modèle
+```
+
+### 4. **Screen** (Screens)
 Affiche l'UI et utilise le controller.
 
 ```dart
@@ -136,7 +172,7 @@ final valeur = ref.watch(compteurValueProvider);
 CompteurDisplay(compteur: valeur);
 ```
 
-### 4. **Widget** (Widgets)
+### 5. **Widget** (Widgets)
 Composants UI réutilisables.
 
 ```dart
@@ -162,7 +198,8 @@ Chaque dossier contient un **README.md** avec :
 
 ### ✅ Séparation des responsabilités
 - **Models** : Structure des données uniquement
-- **Controllers** : Logique métier uniquement
+- **Services** : Abstraction des opérations de données
+- **Controllers** : Logique métier et état (utilise les services)
 - **Screens** : UI uniquement
 - **Widgets** : Composants UI réutilisables uniquement
 - **Utils** : Fonctions utilitaires uniquement
@@ -196,22 +233,29 @@ Chaque dossier contient un **README.md** avec :
 → Implémenter `toJson()` et `fromJson()`
 → Tester avec des tests unitaires
 
-### 3. Nouveau controller
+### 3. Nouveau service
+→ Créer dans `services/` avec les méthodes nécessaires
+→ Créer le provider Riverpod pour l'injection
+→ Utiliser le service dans les controllers
+→ Tester avec des tests unitaires
+
+### 4. Nouveau controller
 → Créer dans `controllers/` qui étend `Notifier<T>`
+→ Utiliser les services pour les opérations de données
 → Créer le provider Riverpod
 → Tester avec des tests unitaires
 
-### 4. Nouveau widget
+### 5. Nouveau widget
 → Créer dans `widgets/` avec `StatelessWidget` ou `ConsumerWidget`
 → Utiliser les constantes (AppSpacing, AppColors, etc.)
 → Ajouter l'accessibilité (Semantics)
 
-### 5. Nouveau screen
+### 6. Nouveau screen
 → Créer dans `screens/` qui étend `ConsumerWidget`
 → Utiliser les widgets réutilisables
 → Ajouter la route dans `constants/app_routes.dart`
 
-### 6. Nouvel utilitaire
+### 7. Nouvel utilitaire
 → Créer dans `utils/` avec méthodes statiques
 → Documenter chaque méthode
 → Tester avec des tests unitaires
